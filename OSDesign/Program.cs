@@ -15,9 +15,7 @@ namespace OSDesign
 
             for (int session = 0; session <= sessionCount; session++)
             {
-                Console.WriteLine($"Сеанс {session}");
-
-                Package package = new Package(tasksPerSession);
+                Package2 package = new Package2(tasksPerSession);
 
                 Stopwatch sessionStopwatch = Stopwatch.StartNew();
 
@@ -86,8 +84,8 @@ namespace OSDesign
                 };
                 avrgData.Add(sessionData);
             }
-
-           SaveDataToCsv(avrgData, "session_data.csv");
+            
+            SaveDataToCsv(avrgData, "session_data.csv");
         }
         static void SaveDataToCsv(List<SessionData> data, string filePath)
         {

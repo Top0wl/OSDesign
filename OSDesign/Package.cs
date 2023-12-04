@@ -11,7 +11,7 @@ namespace Laba1
     {
         public List<(Func<long>, long)> _tasks =new List<(Func<long>, long)>();
 
-        private Stopwatch stopwatch = new Stopwatch();
+        protected Stopwatch stopwatch = new Stopwatch();
 
         public Package(int countTasks, double probabilityProcessor = 0.33, double probabilityOutput = 0.33, double probabilityBalance = 0.33) 
         {
@@ -61,7 +61,7 @@ namespace Laba1
         }
 
         //Буду использовать output функцию т.к. чтение с потока будет слишком тяжёлой операцией
-        private long OutputOperation()
+        protected virtual long OutputOperation()
         {
             stopwatch = Stopwatch.StartNew();
             Console.WriteLine("Output Operation");
@@ -70,7 +70,7 @@ namespace Laba1
         }
 
         //Чисто вычислительная функция
-        private long ProcessorOperation()
+        protected virtual long ProcessorOperation()
         {
             stopwatch = Stopwatch.StartNew();
             double result = (10 * 2 + 5) / 3.0 - 4 + (10 * 2 + 5) / 3.0 - 4 - (10 * 2 + 5) / 3.0 - 4;
@@ -80,7 +80,7 @@ namespace Laba1
         }
 
         //Сбалансированная (1 операция вывода, 1 вычислителньная операция)
-        private long BalanceOperation()
+        protected virtual long BalanceOperation()
         {
             stopwatch = Stopwatch.StartNew();
             double result = (10 * 2 + 5) / 3.0 - 4 + (10 * 2 + 5) / 3.0 - 4 - (10 * 2 + 5) / 3.0 - 4;
@@ -92,6 +92,25 @@ namespace Laba1
 
         public void Start()
         {
+            RoundRobin roundRobin = new RoundRobin();
+
+            foreach (var item in _tasks)
+            {
+                roundRobin.taskQueue.Enqueue(new Task(() => { item.Item1.Invoke(); }));
+            }
+
+            roundRobin.Execute();
+
+
+
+
+
+
+
+
+
+
+
             List<(Func<long>, long)> taskList = new List<(Func<long>, long)>();
 
             foreach (var item in _tasks)
