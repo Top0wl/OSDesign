@@ -1,74 +1,101 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
-Socket serverSocket = null;
-try
+class Server
 {
-    // Устанавливаем IP-адрес и порт для прослушивания
-    int port = 12345;
-    IPAddress localAddr = IPAddress.Parse("127.0.0.1");
+    private Socket serverSocket;
 
-    // Создаем сокет и привязываем его к локальному адресу
-    serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-    serverSocket.Bind(new IPEndPoint(localAddr, port));
-
-    // Начинаем прослушивание клиентов
-    serverSocket.Listen(10);
-    Console.WriteLine("Сервер запущен...");
-
-    // Блокируем программу, ожидая подключения клиента
-    Socket clientSocket = serverSocket.Accept();
-    Console.WriteLine("Клиент подключен!");
-
-    // Буфер для хранения полученных данных
-    byte[] data = new byte[256];
-
-    // Цикл обмена данными с клиентом
-    while (true)
+    public void Start(string ipAddress, int port)
     {
-        // Читаем данные из сокета
-        int bytesRead = clientSocket.Receive(data);
-        string message = Encoding.Unicode.GetString(data, 0, bytesRead);
-        Console.WriteLine($"Получено от клиента: {message}");
+        try
+        {
+            IPAddress localAddr = IPAddress.Parse(ipAddress);
+            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            serverSocket.Bind(new IPEndPoint(localAddr, port));
+            serverSocket.Listen(10);
+            Console.WriteLine($"Сервер запущен... ");
 
-        // Отправляем ответ клиенту
-        string response = "Сообщение получено на сервере.";
-        byte[] responseData = Encoding.Unicode.GetBytes(response);
-        clientSocket.Send(responseData);
+            AcceptClients();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+    }
+
+    private async void AcceptClients()
+    {
+        try
+        {
+            while (true)
+            {
+                Socket clientSocket = await serverSocket.AcceptAsync();
+                Console.WriteLine("=========================================================");
+                Console.WriteLine("Клиент подключен!");
+
+                Task.Run(() => HandleClient(clientSocket));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при принятии клиента: {ex.Message}");
+        }
+    }
+
+    private void HandleClient(Socket clientSocket)
+    {
+        try
+        {
+            byte[] data = new byte[256];
+            while (true)
+            {
+                int bytesRead = clientSocket.Receive(data);
+                string message = Encoding.UTF8.GetString(data, 0, bytesRead);
+                Console.WriteLine($"Получено от клиента: {message}");
+
+                string response = "Сообщение получено на сервере.";
+                byte[] responseData = Encoding.UTF8.GetBytes(response);
+                clientSocket.Send(responseData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при обработке клиента: {ex.Message}");
+        }
+        finally
+        {
+            clientSocket.Close();
+        }
+    }
+
+    public void Stop()
+    {
+        try
+        {
+            serverSocket?.Close();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при остановке сервера: {ex.Message}");
+        }
     }
 }
-catch (Exception ex)
+
+class Program
 {
-    Console.WriteLine($"Ошибка: {ex.Message}");
-}
-finally
-{
-    // Закрываем сокеты
-    serverSocket?.Close();
-}
+    static void Main(string[] args)
+    {
+        Server server = new Server();
 
+        Console.WriteLine("Введите порт: ");
+        int port = int.Parse(Console.ReadLine());
+        server.Start("10.80.15.198", port);
 
+        while (true) { }
 
-
-
-
-
-
-
-
-
-Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-try
-{
-    
-    socket.Shutdown(SocketShutdown.Both);
-}
-catch(Exception ex)
-{
-    Console.WriteLine(ex.Message);
-}
-finally
-{
-    socket.Close();
+        server.Stop();
+    }
 }
